@@ -51,6 +51,8 @@ func newSingleAgentVersion(db *gorm.DB, opts ...gen.DOOption) singleAgentVersion
 	_singleAgentVersion.Description = field.NewString(tableName, "description")
 	_singleAgentVersion.IconURI = field.NewString(tableName, "icon_uri")
 	_singleAgentVersion.CreatedAt = field.NewInt64(tableName, "created_at")
+	_singleAgentVersion.BotMode = field.NewInt32(tableName, "bot_mode")
+	_singleAgentVersion.LayoutInfo = field.NewField(tableName, "layout_info")
 	_singleAgentVersion.UpdatedAt = field.NewInt64(tableName, "updated_at")
 	_singleAgentVersion.DeletedAt = field.NewField(tableName, "deleted_at")
 	_singleAgentVersion.VariablesMetaID = field.NewInt64(tableName, "variables_meta_id")
@@ -66,9 +68,7 @@ func newSingleAgentVersion(db *gorm.DB, opts ...gen.DOOption) singleAgentVersion
 	_singleAgentVersion.Version = field.NewString(tableName, "version")
 	_singleAgentVersion.BackgroundImageInfoList = field.NewField(tableName, "background_image_info_list")
 	_singleAgentVersion.DatabaseConfig = field.NewField(tableName, "database_config")
-	_singleAgentVersion.BotMode = field.NewInt32(tableName, "bot_mode")
 	_singleAgentVersion.ShortcutCommand = field.NewField(tableName, "shortcut_command")
-	_singleAgentVersion.LayoutInfo = field.NewField(tableName, "layout_info")
 
 	_singleAgentVersion.fillFieldMap()
 
@@ -88,6 +88,8 @@ type singleAgentVersion struct {
 	Description             field.String // Agent Description
 	IconURI                 field.String // Icon URI
 	CreatedAt               field.Int64  // Create Time in Milliseconds
+	BotMode                 field.Int32  // bot mode,0:single mode 2:chatflow mode
+	LayoutInfo              field.Field  // chatflow layout info
 	UpdatedAt               field.Int64  // Update Time in Milliseconds
 	DeletedAt               field.Field  // delete time in millisecond
 	VariablesMetaID         field.Int64  // variables meta table ID
@@ -103,9 +105,7 @@ type singleAgentVersion struct {
 	Version                 field.String // Agent Version
 	BackgroundImageInfoList field.Field  // Background image
 	DatabaseConfig          field.Field  // Agent Database Base Configuration
-	BotMode                 field.Int32  // mod,0:single mode 2:chatflow mode
 	ShortcutCommand         field.Field  // shortcut command
-	LayoutInfo              field.Field  // chatflow layout info
 
 	fieldMap map[string]field.Expr
 }
@@ -130,6 +130,8 @@ func (s *singleAgentVersion) updateTableName(table string) *singleAgentVersion {
 	s.Description = field.NewString(table, "description")
 	s.IconURI = field.NewString(table, "icon_uri")
 	s.CreatedAt = field.NewInt64(table, "created_at")
+	s.BotMode = field.NewInt32(table, "bot_mode")
+	s.LayoutInfo = field.NewField(table, "layout_info")
 	s.UpdatedAt = field.NewInt64(table, "updated_at")
 	s.DeletedAt = field.NewField(table, "deleted_at")
 	s.VariablesMetaID = field.NewInt64(table, "variables_meta_id")
@@ -145,9 +147,7 @@ func (s *singleAgentVersion) updateTableName(table string) *singleAgentVersion {
 	s.Version = field.NewString(table, "version")
 	s.BackgroundImageInfoList = field.NewField(table, "background_image_info_list")
 	s.DatabaseConfig = field.NewField(table, "database_config")
-	s.BotMode = field.NewInt32(table, "bot_mode")
 	s.ShortcutCommand = field.NewField(table, "shortcut_command")
-	s.LayoutInfo = field.NewField(table, "layout_info")
 
 	s.fillFieldMap()
 
@@ -173,6 +173,8 @@ func (s *singleAgentVersion) fillFieldMap() {
 	s.fieldMap["description"] = s.Description
 	s.fieldMap["icon_uri"] = s.IconURI
 	s.fieldMap["created_at"] = s.CreatedAt
+	s.fieldMap["bot_mode"] = s.BotMode
+	s.fieldMap["layout_info"] = s.LayoutInfo
 	s.fieldMap["updated_at"] = s.UpdatedAt
 	s.fieldMap["deleted_at"] = s.DeletedAt
 	s.fieldMap["variables_meta_id"] = s.VariablesMetaID
@@ -188,9 +190,7 @@ func (s *singleAgentVersion) fillFieldMap() {
 	s.fieldMap["version"] = s.Version
 	s.fieldMap["background_image_info_list"] = s.BackgroundImageInfoList
 	s.fieldMap["database_config"] = s.DatabaseConfig
-	s.fieldMap["bot_mode"] = s.BotMode
 	s.fieldMap["shortcut_command"] = s.ShortcutCommand
-	s.fieldMap["layout_info"] = s.LayoutInfo
 }
 
 func (s singleAgentVersion) clone(db *gorm.DB) singleAgentVersion {

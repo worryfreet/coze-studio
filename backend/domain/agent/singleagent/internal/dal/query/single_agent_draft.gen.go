@@ -65,8 +65,8 @@ func newSingleAgentDraft(db *gorm.DB, opts ...gen.DOOption) singleAgentDraft {
 	_singleAgentDraft.BackgroundImageInfoList = field.NewField(tableName, "background_image_info_list")
 	_singleAgentDraft.DatabaseConfig = field.NewField(tableName, "database_config")
 	_singleAgentDraft.BotMode = field.NewInt32(tableName, "bot_mode")
-	_singleAgentDraft.ShortcutCommand = field.NewField(tableName, "shortcut_command")
 	_singleAgentDraft.LayoutInfo = field.NewField(tableName, "layout_info")
+	_singleAgentDraft.ShortcutCommand = field.NewField(tableName, "shortcut_command")
 
 	_singleAgentDraft.fillFieldMap()
 
@@ -99,9 +99,9 @@ type singleAgentDraft struct {
 	JumpConfig              field.Field  // Jump Configuration
 	BackgroundImageInfoList field.Field  // Background image
 	DatabaseConfig          field.Field  // Agent Database Base Configuration
-	BotMode                 field.Int32  // mod,0:single mode 2:chatflow mode
-	ShortcutCommand         field.Field  // shortcut command
+	BotMode                 field.Int32  // bot mode,0:single mode 2:chatflow mode
 	LayoutInfo              field.Field  // chatflow layout info
+	ShortcutCommand         field.Field  // shortcut command
 
 	fieldMap map[string]field.Expr
 }
@@ -140,8 +140,8 @@ func (s *singleAgentDraft) updateTableName(table string) *singleAgentDraft {
 	s.BackgroundImageInfoList = field.NewField(table, "background_image_info_list")
 	s.DatabaseConfig = field.NewField(table, "database_config")
 	s.BotMode = field.NewInt32(table, "bot_mode")
-	s.ShortcutCommand = field.NewField(table, "shortcut_command")
 	s.LayoutInfo = field.NewField(table, "layout_info")
+	s.ShortcutCommand = field.NewField(table, "shortcut_command")
 
 	s.fillFieldMap()
 
@@ -181,8 +181,8 @@ func (s *singleAgentDraft) fillFieldMap() {
 	s.fieldMap["background_image_info_list"] = s.BackgroundImageInfoList
 	s.fieldMap["database_config"] = s.DatabaseConfig
 	s.fieldMap["bot_mode"] = s.BotMode
-	s.fieldMap["shortcut_command"] = s.ShortcutCommand
 	s.fieldMap["layout_info"] = s.LayoutInfo
+	s.fieldMap["shortcut_command"] = s.ShortcutCommand
 }
 
 func (s singleAgentDraft) clone(db *gorm.DB) singleAgentDraft {

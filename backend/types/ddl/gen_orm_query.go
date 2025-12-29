@@ -232,7 +232,7 @@ func main() {
 	dsn := os.Getenv("MYSQL_DSN")
 	os.Setenv("LANG", "en_US.UTF-8")
 	if dsn == "" {
-		dsn = "root:root@tcp(localhost:3306)/opencoze?charset=utf8mb4&parseTime=True"
+		dsn = "root:123456@tcp(localhost:3306)/opencoze?charset=utf8mb4&parseTime=True"
 	}
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{

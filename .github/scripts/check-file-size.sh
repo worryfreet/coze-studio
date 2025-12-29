@@ -59,8 +59,23 @@ large_files_info=""
 
 IFS=$'\n' # Handling the existence of spaces in the file name
 for file in $files; do
-  file_size=$(wc -c <"$file" 2>/dev/null)
-  if [ $? -ne 0 ]; then
+  # Skip directories/submodules (gitlink). Submodules appear as directories in worktree
+  # and as "commit" objects in the index, which are not meaningful for size checks.
+  if [ -d "$file" ]; then
+    continue
+  fi
+
+  obj_type=$(git cat-file -t ":$file" 2>/dev/null)
+  if [ "$obj_type" = "commit" ]; then
+    continue
+  fi
+
+  # Prefer reading size from the index (staged content) to avoid worktree discrepancies.
+  file_size=$(git cat-file -s ":$file" 2>/dev/null)
+  if [ $? -ne 0 ] || [ -z "$file_size" ]; then
+    file_size=$(wc -c <"$file" 2>/dev/null)
+  fi
+  if [ $? -ne 0 ] || [ -z "$file_size" ]; then
     echo "错误: 无法获取文件 '$file' 的大小"
     continue
   fi

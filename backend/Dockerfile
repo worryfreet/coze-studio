@@ -7,11 +7,11 @@ WORKDIR /app
 RUN apk add --no-cache git gcc libc-dev
 
 # Copy go.mod and go.sum first to leverage Docker cache
-COPY backend/go.mod backend/go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy the entire backend source code
-COPY backend/ ./
+COPY . ./
 
 # Build the Go application
 RUN go build -ldflags="-s -w" -o /app/opencoze main.go
@@ -47,16 +47,17 @@ RUN apk add --no-cache --virtual .python-build-deps build-base py3-pip git && \
 COPY --from=builder /app/opencoze /app/opencoze
 
 # Copy Python application scripts
-COPY backend/infra/document/parser/impl/builtin/parse_pdf.py /app/parse_pdf.py
-COPY backend/infra/document/parser/impl/builtin/parse_docx.py /app/parse_docx.py
-COPY backend/infra/coderunner/impl/script/sandbox.py /app/sandbox.py
+COPY infra/document/parser/impl/builtin/parse_pdf.py /app/parse_pdf.py
+COPY infra/document/parser/impl/builtin/parse_docx.py /app/parse_docx.py
+COPY infra/coderunner/impl/script/sandbox.py /app/sandbox.py
 
 
 # Copy static resources
-# COPY backend/static /app/resources/static/
-COPY backend/conf /app/resources/conf/
-COPY docker/.env.example /app/.env
-# COPY docker/.env.ve /app/.env
+# COPY static /app/resources/static/
+COPY conf /app/resources/conf/
+# NOTE: Do not bake .env into the image. Pass env vars via docker-compose `env_file`
+# or mount a runtime `.env` into `/app/.env` if needed.
+COPY .env.local /app/.env
 # COPY docker/cert.pem /app/cert.pem
 # COPY docker/key.pem /app/key.pem
 
@@ -69,7 +70,7 @@ RUN chmod +x /app/parse_pdf.py /app/parse_docx.py  && \
     find /app/.venv/bin -type f -exec chmod +x {} \;
 
 
-EXPOSE 8888
+EXPOSE 9000
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 

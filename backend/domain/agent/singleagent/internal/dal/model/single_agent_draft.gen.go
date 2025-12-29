@@ -34,7 +34,7 @@ type SingleAgentDraft struct {
 	CreatorID               int64                             `gorm:"column:creator_id;not null;comment:Creator ID" json:"creator_id"`                                              // Creator ID
 	SpaceID                 int64                             `gorm:"column:space_id;not null;comment:Space ID" json:"space_id"`                                                    // Space ID
 	Name                    string                            `gorm:"column:name;not null;comment:Agent Name" json:"name"`                                                          // Agent Name
-	Description             string                            `gorm:"column:description;not null;comment:Agent Description" json:"description"`                                     // Agent Description
+	Description             *string                           `gorm:"column:description;comment:Agent Description" json:"description"`                                              // Agent Description
 	IconURI                 string                            `gorm:"column:icon_uri;not null;comment:Icon URI" json:"icon_uri"`                                                    // Icon URI
 	CreatedAt               int64                             `gorm:"column:created_at;not null;autoCreateTime:milli;comment:Create Time in Milliseconds" json:"created_at"`        // Create Time in Milliseconds
 	UpdatedAt               int64                             `gorm:"column:updated_at;not null;autoUpdateTime:milli;comment:Update Time in Milliseconds" json:"updated_at"`        // Update Time in Milliseconds
@@ -50,9 +50,9 @@ type SingleAgentDraft struct {
 	JumpConfig              *bot_common.JumpConfig            `gorm:"column:jump_config;comment:Jump Configuration;serializer:json" json:"jump_config"`                             // Jump Configuration
 	BackgroundImageInfoList []*bot_common.BackgroundImageInfo `gorm:"column:background_image_info_list;comment:Background image;serializer:json" json:"background_image_info_list"` // Background image
 	DatabaseConfig          []*bot_common.Database            `gorm:"column:database_config;comment:Agent Database Base Configuration;serializer:json" json:"database_config"`      // Agent Database Base Configuration
-	BotMode                 int32                             `gorm:"column:bot_mode;not null;comment:mod,0:single mode 2:chatflow mode" json:"bot_mode"`                           // mod,0:single mode 2:chatflow mode
-	ShortcutCommand         []string                          `gorm:"column:shortcut_command;comment:shortcut command;serializer:json" json:"shortcut_command"`                     // shortcut command
+	BotMode                 int32                             `gorm:"column:bot_mode;not null;comment:bot mode,0:single mode 2:chatflow mode" json:"bot_mode"`                      // bot mode,0:single mode 2:chatflow mode
 	LayoutInfo              *bot_common.LayoutInfo            `gorm:"column:layout_info;comment:chatflow layout info;serializer:json" json:"layout_info"`                           // chatflow layout info
+	ShortcutCommand         []string                          `gorm:"column:shortcut_command;comment:shortcut command;serializer:json" json:"shortcut_command"`                     // shortcut command
 }
 
 // TableName SingleAgentDraft's table name

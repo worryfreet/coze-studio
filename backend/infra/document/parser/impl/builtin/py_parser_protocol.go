@@ -17,6 +17,7 @@
 package builtin
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -79,10 +80,12 @@ func ParseByPython(config *contract.Config, storage storage.Storage, ocr ocr.OCR
 		if err != nil {
 			return nil, fmt.Errorf("[ParseByPython] create rpipe failed, %w", err)
 		}
+		defer func() { _ = pr.Close() }()
 		r, w, err := os.Pipe()
 		if err != nil {
 			return nil, fmt.Errorf("[ParseByPython] create pipe failed: %w", err)
 		}
+		defer func() { _ = r.Close() }()
 		options := parser.GetCommonOptions(&parser.Options{ExtraMeta: map[string]any{}}, opts...)
 
 		reqb, err := json.Marshal(pyParseRequest{
@@ -100,9 +103,13 @@ func ParseByPython(config *contract.Config, storage storage.Storage, ocr ocr.OCR
 			return nil, fmt.Errorf("[ParseByPython] close write request pipe failed, %w", err)
 		}
 
-		cmd := exec.Command(pyPath, scriptPath)
+		cmd := exec.CommandContext(ctx, pyPath, scriptPath)
 		cmd.Stdin = reader
+		// Python scripts write the actual JSON result to FD 3 (ExtraFiles[0]).
+		// Keep stdout for debug prints; capture stderr to surface import/exec errors instead of a generic EOF.
 		cmd.Stdout = os.Stdout
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
 		cmd.ExtraFiles = []*os.File{w, pr}
 		if err = cmd.Start(); err != nil {
 			return nil, fmt.Errorf("[ParseByPython] failed to start Python script: %w", err)
@@ -114,13 +121,23 @@ func ParseByPython(config *contract.Config, storage storage.Storage, ocr ocr.OCR
 		result := &pyParseResult{}
 
 		if err = json.NewDecoder(r).Decode(result); err != nil {
-			return nil, fmt.Errorf("[ParseByPython] failed to decode result: %w", err)
+			waitErr := cmd.Wait() // make sure we reap the process
+			if se := strings.TrimSpace(stderr.String()); se != "" {
+				return nil, fmt.Errorf("[ParseByPython] failed to decode result: %w (py=%s, script=%s, wait=%v, stderr=%s)", err, pyPath, scriptPath, waitErr, se)
+			}
+			return nil, fmt.Errorf("[ParseByPython] failed to decode result: %w (py=%s, script=%s, wait=%v)", err, pyPath, scriptPath, waitErr)
 		}
 		if err = cmd.Wait(); err != nil {
-			return nil, fmt.Errorf("[ParseByPython] cmd wait err: %w", err)
+			if se := strings.TrimSpace(stderr.String()); se != "" {
+				return nil, fmt.Errorf("[ParseByPython] cmd wait err: %w (py=%s, script=%s, stderr=%s)", err, pyPath, scriptPath, se)
+			}
+			return nil, fmt.Errorf("[ParseByPython] cmd wait err: %w (py=%s, script=%s)", err, pyPath, scriptPath)
 		}
 
 		if result.Error != "" {
+			if se := strings.TrimSpace(stderr.String()); se != "" {
+				return nil, fmt.Errorf("[ParseByPython] python execution failed: %s (stderr=%s)", result.Error, se)
+			}
 			return nil, fmt.Errorf("[ParseByPython] python execution failed: %s", result.Error)
 		}
 

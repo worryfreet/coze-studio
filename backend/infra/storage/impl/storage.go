@@ -23,6 +23,7 @@ import (
 
 	"github.com/coze-dev/coze-studio/backend/infra/imagex"
 	"github.com/coze-dev/coze-studio/backend/infra/storage"
+	"github.com/coze-dev/coze-studio/backend/infra/storage/impl/cos"
 	"github.com/coze-dev/coze-studio/backend/infra/storage/impl/minio"
 	"github.com/coze-dev/coze-studio/backend/infra/storage/impl/s3"
 	"github.com/coze-dev/coze-studio/backend/infra/storage/impl/tos"
@@ -62,6 +63,15 @@ func New(ctx context.Context) (Storage, error) {
 			os.Getenv(consts.S3Endpoint),
 			os.Getenv(consts.S3Region),
 		)
+	case "cos":
+		return cos.New(
+			ctx,
+			os.Getenv(consts.COSSecretID),
+			os.Getenv(consts.COSSecretKey),
+			os.Getenv(consts.StorageBucket),
+			os.Getenv(consts.COSEndpoint),
+			os.Getenv(consts.COSRegion),
+		)
 	}
 
 	return nil, fmt.Errorf("unknown storage type: %s", storageType)
@@ -96,6 +106,15 @@ func NewImagex(ctx context.Context) (imagex.ImageX, error) {
 			os.Getenv(consts.StorageBucket),
 			os.Getenv(consts.S3Endpoint),
 			os.Getenv(consts.S3Region),
+		)
+	case "cos":
+		return cos.NewStorageImagex(
+			ctx,
+			os.Getenv(consts.COSSecretID),
+			os.Getenv(consts.COSSecretKey),
+			os.Getenv(consts.StorageBucket),
+			os.Getenv(consts.COSEndpoint),
+			os.Getenv(consts.COSRegion),
 		)
 	}
 	return nil, fmt.Errorf("unknown storage type: %s", storageType)

@@ -8,6 +8,7 @@
 .env
 .env.debug
 .env.oceanbase
+.env.local.docker
 
 # Test binary, built with `go test -c`
 *.test
@@ -59,4 +60,4 @@ values-dev.yaml
 **/conf/model_ark_doubao-seed-1.6.yaml
 
 *.tsbuildinfo
-
+.trae/*

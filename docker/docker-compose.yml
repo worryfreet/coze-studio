@@ -3,116 +3,117 @@ x-env-file: &env_file
   - .env
 
 services:
-  mysql:
-    image: mysql:8.4.5
-    container_name: coze-mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-opencoze}
-      MYSQL_USER: ${MYSQL_USER:-coze}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-coze123}
-    env_file: *env_file
-    # ports:
-    #   - '3306'
-    volumes:
-      - ./data/mysql:/var/lib/mysql
-      - ./volumes/mysql/schema.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./atlas/opencoze_latest_schema.hcl:/opencoze_latest_schema.hcl:ro
-    entrypoint:
-      - bash
-      - -c
-      - |
-        /usr/local/bin/docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci &
-        MYSQL_PID=$$!
+  # mysql:
+  #   image: mysql:8.4.5
+  #   container_name: coze-mysql
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+  #     MYSQL_DATABASE: ${MYSQL_DATABASE:-opencoze}
+  #     MYSQL_USER: ${MYSQL_USER:-coze}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-coze123}
+  #   env_file: *env_file
+  #   # ports:
+  #   #   - '3306'
+  #   volumes:
+  #     - ./data/mysql:/var/lib/mysql
+  #     - ./volumes/mysql/schema.sql:/docker-entrypoint-initdb.d/init.sql
+  #     - ./atlas/opencoze_latest_schema.hcl:/opencoze_latest_schema.hcl:ro
+  #   entrypoint:
+  #     - bash
+  #     - -c
+  #     - |
+  #       /usr/local/bin/docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci &
+  #       MYSQL_PID=$$!
 
-        echo 'Waiting for MySQL to start...'
-        until mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent 2>/dev/null; do
-          echo 'MySQL is starting...'
-          sleep 2
-        done
+  #       echo 'Waiting for MySQL to start...'
+  #       until mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent 2>/dev/null; do
+  #         echo 'MySQL is starting...'
+  #         sleep 2
+  #       done
 
-        echo 'Waiting for workflow_version table to exist...'
-        while true; do
-          if mysql -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} $${MYSQL_DATABASE} -e "SHOW TABLES LIKE 'workflow_version';" 2>/dev/null | grep -q "workflow_version"; then
-            echo 'Found workflow_version table, continuing...'
-            break
-          else
-            echo 'workflow_version table not found, retrying in 2 seconds...'
-            sleep 2
-          fi
-        done
+  #       echo 'Waiting for workflow_version table to exist...'
+  #       while true; do
+  #         if mysql -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} $${MYSQL_DATABASE} -e "SHOW TABLES LIKE 'workflow_version';" 2>/dev/null | grep -q "workflow_version"; then
+  #           echo 'Found workflow_version table, continuing...'
+  #           break
+  #         else
+  #           echo 'workflow_version table not found, retrying in 2 seconds...'
+  #           sleep 2
+  #         fi
+  #       done
 
-        echo 'MySQL is ready, installing Atlas CLI...'
+  #       echo 'MySQL is ready, installing Atlas CLI...'
 
-        if ! command -v atlas >/dev/null 2>&1; then
-          echo 'Installing Atlas CLI...'
-          curl -sSf https://atlasgo.sh | sh -s -- -y --community
-          export PATH=$$PATH:/root/.local/bin
-        else
-          echo 'Atlas CLI already installed'
-        fi
+  #       if ! command -v atlas >/dev/null 2>&1; then
+  #         echo 'Installing Atlas CLI...'
+  #         curl -sSf https://atlasgo.sh | sh -s -- -y --community
+  #         export PATH=$$PATH:/root/.local/bin
+  #       else
+  #         echo 'Atlas CLI already installed'
+  #       fi
 
-        if [ -f '/opencoze_latest_schema.hcl' ]; then
-          echo 'Running Atlas migrations...'
-          ATLAS_URL="mysql://$${MYSQL_USER}:$${MYSQL_PASSWORD}@localhost:3306/$${MYSQL_DATABASE}"
-          atlas schema apply -u "$ATLAS_URL" --to "file:///opencoze_latest_schema.hcl" --exclude "atlas_schema_revisions,table_*" --auto-approve
-          echo 'Atlas migrations completed successfully'
-        else
-          echo 'No migrations found'
-        fi
-        wait $$MYSQL_PID
-    healthcheck:
-      test:
-        [
-          'CMD',
-          'mysqladmin',
-          'ping',
-          '-h',
-          'localhost',
-          '-u$${MYSQL_USER}',
-          '-p$${MYSQL_PASSWORD}',
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - coze-network
+  #       if [ -f '/opencoze_latest_schema.hcl' ]; then
+  #         echo 'Running Atlas migrations...'
+  #         ATLAS_URL="mysql://$${MYSQL_USER}:$${MYSQL_PASSWORD}@localhost:3306/$${MYSQL_DATABASE}"
+  #         atlas schema apply -u "$ATLAS_URL" --to "file:///opencoze_latest_schema.hcl" --exclude "atlas_schema_revisions,table_*" --auto-approve
+  #         echo 'Atlas migrations completed successfully'
+  #       else
+  #         echo 'No migrations found'
+  #       fi
+  #       wait $$MYSQL_PID
+  #   healthcheck:
+  #     test:
+  #       [
+  #         'CMD',
+  #         'mysqladmin',
+  #         'ping',
+  #         '-h',
+  #         'localhost',
+  #         '-u$${MYSQL_USER}',
+  #         '-p$${MYSQL_PASSWORD}',
+  #       ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   networks:
+  #     - coze-network
 
-  redis:
-    image: bitnamilegacy/redis:8.0
-    container_name: coze-redis
-    restart: always
-    user: root
-    privileged: true
-    env_file: *env_file
-    environment:
-      - REDIS_AOF_ENABLED=${REDIS_AOF_ENABLED:-no}
-      - REDIS_PORT_NUMBER=${REDIS_PORT_NUMBER:-6379}
-      - REDIS_IO_THREADS=${REDIS_IO_THREADS:-4}
-      - ALLOW_EMPTY_PASSWORD=${ALLOW_EMPTY_PASSWORD:-yes}
-    # ports:
-    #   - '6379'
-    volumes:
-      - ./data/bitnami/redis:/bitnami/redis/data:rw,Z
-    command: >
-      bash -c "
-        /opt/bitnami/scripts/redis/setup.sh
-        # Set proper permissions for data directories
-        chown -R redis:redis /bitnami/redis/data
-        chmod g+s /bitnami/redis/data
+  # redis:
+    # image: bitnamilegacy/redis:8.0
+    # container_name: coze-redis
+    # restart: always
+    # user: root
+    # privileged: true
+    # env_file: *env_file
+    # environment:
+    #   - REDIS_AOF_ENABLED=${REDIS_AOF_ENABLED:-no}
+    #   - REDIS_PORT_NUMBER=${REDIS_PORT_NUMBER:-6379}
+    #   - REDIS_IO_THREADS=${REDIS_IO_THREADS:-4}
+    #   - ALLOW_EMPTY_PASSWORD=${ALLOW_EMPTY_PASSWORD:-yes}
+    # # ports:
+    # #   - '6379'
+    # volumes:
+    #   - ./data/bitnami/redis:/bitnami/redis/data:rw,Z
+    # command: >
+    #   bash -c "
+    #     /opt/bitnami/scripts/redis/setup.sh
+    #     # Set proper permissions for data directories
+    #     chown -R redis:redis /bitnami/redis/data
+    #     chmod g+s /bitnami/redis/data
 
-        exec /opt/bitnami/scripts/redis/entrypoint.sh /opt/bitnami/scripts/redis/run.sh
-      "
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
-      timeout: 10s
-      retries: 10
-      start_period: 10s
-    networks:
-      - coze-network
+    #     exec /opt/bitnami/scripts/redis/entrypoint.sh /opt/bitnami/scripts/redis/run.sh
+    #   "
+    # healthcheck:
+    #   test: ['CMD', 'redis-cli', 'ping']
+    #   interval: 5s
+    #   timeout: 10s
+    #   retries: 10
+    #   start_period: 10s
+    # networks:
+    #   - coze-network
+
   elasticsearch:
     image: bitnamilegacy/elasticsearch:8.18.0
     container_name: coze-elasticsearch
@@ -124,8 +125,8 @@ services:
       - TEST=1
       # Add Java certificate trust configuration
       # - ES_JAVA_OPTS=-Djdk.tls.client.protocols=TLSv1.2 -Dhttps.protocols=TLSv1.2 -Djavax.net.ssl.trustAll=true -Xms4096m -Xmx4096m
-    # ports:
-    #   - '9200'
+    ports:
+      - '9200:9200'
     volumes:
       - ./data/bitnami/elasticsearch:/bitnami/elasticsearch/data
       - ./volumes/elasticsearch/elasticsearch.yml:/opt/bitnami/elasticsearch/config/my_elasticsearch.yml
@@ -207,9 +208,9 @@ services:
     privileged: true
     restart: always
     env_file: *env_file
-    # ports:
-    #   - '9000'
-    #   - '9001'
+    ports:
+      - '9000:9000'
+      - '9001:9001'
     volumes:
       - ./data/minio:/data
       - ./volumes/minio/default_icon/:/default_icon
@@ -265,9 +266,9 @@ services:
       - ETCD_AUTO_COMPACTION_RETENTION=1000
       - ETCD_QUOTA_BACKEND_BYTES=4294967296
       - ALLOW_NONE_AUTHENTICATION=yes
-    # ports:
-    #   - '2379'
-    #   - '2380'
+    ports:
+      - '2379:2379'
+      - '2380:2380'
     volumes:
       - ./data/bitnami/etcd:/bitnami/etcd:rw,Z
       - ./volumes/etcd/etcd.conf.yml:/opt/bitnami/etcd/conf/etcd.conf.yml:ro,Z
@@ -322,9 +323,9 @@ services:
       timeout: 10s
       retries: 10
       start_period: 10s
-    # ports:
-    #   - '19530'
-    #   - '9091'
+    ports:
+      - '19530:19530'
+      - '9091:9091'
     depends_on:
       etcd:
         condition: service_healthy
@@ -332,14 +333,15 @@ services:
         condition: service_healthy
     networks:
       - coze-network
+
   nsqlookupd:
     image: nsqio/nsq:v1.2.1
     container_name: coze-nsqlookupd
     command: /nsqlookupd
     restart: always
-    # ports:
-    #   - '4160'
-    #   - '4161'
+    ports:
+      - '4160:4160'
+      - '4161:4161'
     networks:
       - coze-network
     healthcheck:
@@ -354,9 +356,9 @@ services:
     container_name: coze-nsqd
     command: /nsqd --lookupd-tcp-address=nsqlookupd:4160 --broadcast-address=nsqd
     restart: always
-    # ports:
-    #   - '4150'
-    #   - '4151'
+    ports:
+      - '4150:4150'
+      - '4151:4151'
     depends_on:
       nsqlookupd:
         condition: service_healthy
@@ -374,64 +376,64 @@ services:
     container_name: coze-nsqadmin
     command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
     restart: always
-    # ports:
-    #   - '4171'
+    ports:
+      - '4171:4171'
     depends_on:
       nsqlookupd:
         condition: service_healthy
     networks:
       - coze-network
 
-  coze-server:
-    # build:
-    #   context: ../
-    #   dockerfile: backend/Dockerfile
-    image: cozedev/coze-studio-server:latest
-    restart: always
-    container_name: coze-server
-    env_file: *env_file
-    # environment:
-    #   LISTEN_ADDR: 0.0.0.0:8888
-    networks:
-      - coze-network
-    # ports:
-    #   - '8888'
-    #   - '8889'
-    volumes:
-      - .env:/app/.env
-      - ../backend/conf:/app/resources/conf
-      # - ../backend/static:/app/resources/static
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      milvus:
-        condition: service_healthy
-    command: ['/app/opencoze']
+  # coze-server:
+  #   # build:
+  #   #   context: ../
+  #   #   dockerfile: backend/Dockerfile
+  #   image: cozedev/coze-studio-server:latest
+  #   restart: always
+  #   container_name: coze-server
+  #   env_file: *env_file
+  #   # environment:
+  #   #   LISTEN_ADDR: 0.0.0.0:8888
+  #   networks:
+  #     - coze-network
+  #   # ports:
+  #   #   - '8888'
+  #   #   - '8889'
+  #   volumes:
+  #     - .env:/app/.env
+  #     - ../backend/conf:/app/resources/conf
+  #     # - ../backend/static:/app/resources/static
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     elasticsearch:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #     milvus:
+  #       condition: service_healthy
+  #   command: ['/app/opencoze']
 
-  coze-web:
-    # build:
-    #   context: ..
-    #   dockerfile: frontend/Dockerfile
-    image: cozedev/coze-studio-web:latest
-    container_name: coze-web
-    restart: always
-    ports:
-      - "${WEB_LISTEN_ADDR:-8888}:80"
-      # - "443:443"  # SSL port (uncomment if using SSL)
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Main nginx config
-      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro  # Proxy config
-      # - ./nginx/ssl:/etc/nginx/ssl:ro  # SSL certificates (uncomment if using SSL)
-    depends_on:
-      - coze-server
-    networks:
-      - coze-network
+  # coze-web:
+  #   # build:
+  #   #   context: ..
+  #   #   dockerfile: frontend/Dockerfile
+  #   image: cozedev/coze-studio-web:latest
+  #   container_name: coze-web
+  #   restart: always
+  #   ports:
+  #     - "${WEB_LISTEN_ADDR:-8888}:80"
+  #     # - "443:443"  # SSL port (uncomment if using SSL)
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # Main nginx config
+  #     - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro  # Proxy config
+  #     # - ./nginx/ssl:/etc/nginx/ssl:ro  # SSL certificates (uncomment if using SSL)
+  #   depends_on:
+  #     - coze-server
+  #   networks:
+  #     - coze-network
 
 networks:
   coze-network:

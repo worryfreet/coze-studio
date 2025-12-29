@@ -1,0 +1,192 @@
+info:
+  title: 短视频生成
+  description: 短视频制作神器
+  version: v1
+openapi: 3.0.1
+paths:
+  /ai/getTTSByToken:
+    post:
+      summary: 获取 tts 结果
+      operationId: getTTSByToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - execId
+              properties:
+                execId:
+                  type: string
+                  description: 执行 id
+                token:
+                  type: string
+                  description: 私有 token
+                  default: 694d0aa0b0eccc823afe1f32
+      responses:
+        '200':
+          description: description is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      audioUrl:
+                        type: string
+                      wordList:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            end:
+                              type: string
+                            start:
+                              type: string
+                            text:
+                              type: string
+                  err:
+                    type: integer
+  /ai/makeTTSByToken:
+    post:
+      summary: 多人语音合成
+      operationId: makeTTSByToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - wordList
+              properties:
+                token:
+                  type: string
+                  description: 私人 token
+                  default: 694d0aa0b0eccc823afe1f32
+                wordList:
+                  type: array
+                  description: 句子列表
+                  items:
+                    type: object
+                    description: 句子
+                    required:
+                      - text
+                      - tts
+                    properties:
+                      text:
+                        type: string
+                        description: 句子
+                      tts:
+                        type: object
+                        description: tts
+                        required:
+                          - voice
+                        properties:
+                          voice:
+                            type: string
+                            description: 声音 id
+      responses:
+        '200':
+          description: description is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      execId:
+                        type: string
+                  err:
+                    type: integer
+                  msg:
+                    type: string
+  /shortVideo/getDetailByToken:
+    post:
+      summary: 获取生成视频的最后结果
+      operationId: getVideoDetail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: 私人 token
+                  default: 694d0aa0b0eccc823afe1f32
+                workerId:
+                  type: string
+                  description: ' 进程 id'
+      responses:
+        '200':
+          description: description is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: integer
+                      videoUrl:
+                        type: string
+                  err:
+                    type: integer
+  /shortVideo/makeVideoByToken:
+    post:
+      summary: 根据标题和内容生成短视频
+      operationId: makeVideoByToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+                - title
+                - token
+              properties:
+                content:
+                  type: string
+                  description: 解说文案
+                  default: 上一世，我只是皇城里一个任人宰割的傀儡，被权臣玩弄，被兄弟背叛，最终含恨而亡。 可当我再次睁开眼，却发现自己回到了登基之前的那一天。 这一世，我不再软弱，不再仁慈。  朝堂之上，奸臣还在假意忠心；后宫之中，暗流依旧汹涌。 但他们不知道，我早已看清每一个人的结局。 谁会叛变，谁会夺权，谁会在关键时刻反咬我一口，我全都记得清清楚楚。  从这一刻起，我要亲手改写命运。 削藩权、清朝纲、掌兵权、控天下。 不再做任人摆布的棋子，而是执棋之人。  这一世，我要坐稳龙椅， 这一世，我要让天下人知道—— 皇帝，只能是我。
+                replace:
+                  type: boolean
+                  description: ' 替换'
+                  default: true
+                title:
+                  type: string
+                  description: 标题
+                  default: 重生我要做皇帝
+                token:
+                  type: string
+                  description: 私有 token
+                  default: 694d0aa0b0eccc823afe1f32
+                worker:
+                  type: boolean
+                  description: ' 工作方式'
+                  default: true
+      responses:
+        '200':
+          description: description is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  err:
+                    type: integer
+                  msg:
+                    type: string
+servers:
+  - url: https://enterprise.qulang8.cn/api

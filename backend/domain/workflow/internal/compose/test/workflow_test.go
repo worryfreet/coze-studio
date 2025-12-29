@@ -28,6 +28,7 @@ import (
 	compose2 "github.com/coze-dev/coze-studio/backend/domain/workflow/internal/compose"
 	"github.com/coze-dev/coze-studio/backend/domain/workflow/internal/nodes/entry"
 	"github.com/coze-dev/coze-studio/backend/domain/workflow/internal/nodes/exit"
+	"github.com/coze-dev/coze-studio/backend/domain/workflow/internal/nodes/plugin"
 	"github.com/coze-dev/coze-studio/backend/domain/workflow/internal/nodes/selector"
 	"github.com/coze-dev/coze-studio/backend/domain/workflow/internal/nodes/textprocessor"
 	"github.com/coze-dev/coze-studio/backend/domain/workflow/internal/nodes/variableaggregator"
@@ -306,6 +307,70 @@ func TestAddSelector(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]any{}, out)
+}
+
+func TestPluginDefaultBranch(t *testing.T) {
+	entryN := &schema.NodeSchema{
+		Key:     entity.EntryNodeKey,
+		Type:    entity.NodeTypeEntry,
+		Configs: &entry.Config{},
+	}
+
+	pluginNode := &schema.NodeSchema{
+		Key:  "pluginNode",
+		Type: entity.NodeTypePlugin,
+		Configs: &plugin.Config{
+			PluginID:      1,
+			ToolID:        1,
+			PluginVersion: "v1",
+		},
+	}
+
+	exitN := &schema.NodeSchema{
+		Key:  entity.ExitNodeKey,
+		Type: entity.NodeTypeExit,
+		Configs: &exit.Config{
+			TerminatePlan: vo.ReturnVariables,
+		},
+		InputSources: []*vo.FieldInfo{
+			{
+				Path: compose.FieldPath{"result"},
+				Source: vo.FieldSource{
+					Ref: &vo.Reference{
+						FromNodeKey: pluginNode.Key,
+						FromPath:    compose.FieldPath{"result"},
+					},
+				},
+			},
+		},
+	}
+
+	ws := &schema.WorkflowSchema{
+		Nodes: []*schema.NodeSchema{
+			entryN,
+			pluginNode,
+			exitN,
+		},
+		Connections: []*schema.Connection{
+			{
+				FromNode: entryN.Key,
+				ToNode:   pluginNode.Key,
+			},
+			{
+				FromNode: pluginNode.Key,
+				ToNode:   exitN.Key,
+				FromPort: ptr.Of(schema.PortDefault),
+			},
+		},
+	}
+
+	branches, err := schema.BuildBranches(ws.Connections)
+	assert.NoError(t, err)
+	ws.Branches = branches
+	ws.Init()
+
+	_, err = compose2.NewWorkflow(context.Background(), ws)
+	assert.NoError(t, err)
 }
 
 func TestVariableAggregator(t *testing.T) {

@@ -40,3 +40,6 @@ dumped_hertz_remote_config.json
 /domain/workflow/internal/nodes/code/script/RestrictedPython/__pycache__/**
 .env.dev
 .env.local
+.env.local.docker
+
+resources/

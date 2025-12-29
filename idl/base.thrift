@@ -40,3 +40,11 @@ struct EmptyRpcReq {
 struct EmptyRpcResp {
     255: optional BaseResp BaseResp,
 }
+
+struct IdReq {
+    1: i64 id,
+}
+
+struct IdResp {
+    1: i64 id,
+}

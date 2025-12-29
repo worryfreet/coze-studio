@@ -107,6 +107,14 @@ func (c *Config) Build(_ context.Context, _ *schema.NodeSchema, _ ...schema.Buil
 	}, nil
 }
 
+func (c *Config) BuildBranch(_ context.Context) (
+	func(ctx context.Context, nodeOutput map[string]any) (int64, bool, error), bool) {
+	// 插件节点没有分支选择，强制走默认分支即可。
+	return func(ctx context.Context, _ map[string]any) (int64, bool, error) {
+		return 0, true, nil
+	}, true
+}
+
 type Plugin struct {
 	pluginID      int64
 	toolID        int64
